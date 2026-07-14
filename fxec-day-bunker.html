@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FXEC Day Bunker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ===========================
+   RESET & CSS VARIABLES
+=========================== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  /* Light notebook palette */
+  --bg:        #f5f0e8;
+  --bg2:       #ede8df;
+  --surface:   #faf7f2;
+  --surface2:  #f0ebe0;
+  --border:    #d4c9b0;
+  --border2:   #c2b49a;
+  --text:      #1e1a14;
+  --muted:     #7a6e5c;
+  --muted2:    #a89e8c;
+
+  /* Status colors */
+  --safe:      #2d7a4f;
+  --safe-bg:   #d6f0e2;
+  --safe-bd:   #a8dcc0;
+  --risk:      #9a6200;
+  --risk-bg:   #fdf0c8;
+  --risk-bd:   #f0d080;
+  --danger:    #b83030;
+  --danger-bg: #fde8e8;
+  --danger-bd: #f0aaaa;
+
+  /* Accent */
+  --accent:    #c05000;
+  --accent-bg: #fde8d8;
+
+  --radius:    14px;
+  --radius-sm: 9px;
+  --font:      'Rubik', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+
+  /* Day chip colors */
+  --chip-full:  #e8f4fd;
+  --chip-full-b:#3a8fcc;
+  --chip-morn:  #fff3e0;
+  --chip-morn-b:#e07820;
+  --chip-eve:   #f3e8fd;
+  --chip-eve-b: #8040b8;
+}
+
+/* Paper texture via SVG filter */
+html{height:100%;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100%;
+  position:relative;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ===========================
+   LAYOUT
+=========================== */
+.app{
+  position:relative;z-index:1;
+  max-width:460px;margin:0 auto;
+  padding:0 14px 90px;
+}
+
+/* ===========================
+   HEADER
+=========================== */
+.header{
+  padding:22px 0 16px;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  border-bottom:2px solid var(--border);
+  margin-bottom:16px;
+}
+.logo-row{display:flex;align-items:center;gap:10px;}
+.logo-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:var(--text);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+  box-shadow:3px 3px 0 var(--border2);
+}
+.logo-block{}
+.logo-name{
+  font-size:1.2rem;font-weight:900;letter-spacing:-0.5px;
+  color:var(--text);line-height:1.1;
+}
+.logo-name span{color:var(--accent);}
+.logo-sub{
+  font-family:var(--mono);font-size:0.58rem;
+  color:var(--muted);letter-spacing:0.06em;margin-top:2px;
+}
+.version-tag{
+  font-family:var(--mono);font-size:0.6rem;
+  background:var(--surface2);border:1px solid var(--border);
+  padding:3px 8px;border-radius:6px;color:var(--muted);
+  margin-top:4px;white-space:nowrap;
+}
+
+/* ===========================
+   NAV TABS
+=========================== */
+.nav{
+  display:flex;gap:4px;
+  background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:4px;
+  margin-bottom:16px;
+}
+.nav-btn{
+  flex:1;padding:9px 2px;border:none;border-radius:10px;
+  background:transparent;color:var(--muted);
+  font-family:var(--font);font-size:0.67rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  letter-spacing:0.02em;
+}
+.nav-btn .ni{font-size:1rem;}
+.nav-btn.active{
+  background:var(--surface);color:var(--text);
+  border:1.5px solid var(--border);
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* ===========================
+   CARDS
+=========================== */
+.card{
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:12px;
+  box-shadow:3px 3px 0 var(--bg2);
+  animation:fadeUp 0.3s ease both;
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.card-title{
+  font-size:0.65rem;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:6px;
+}
+.card-title-bar{
+  width:18px;height:3px;border-radius:2px;
+  background:var(--accent);flex-shrink:0;
+}
+
+/* ===========================
+   ATTENDANCE RING
+=========================== */
+.ring-area{
+  display:flex;flex-direction:column;align-items:center;
+  gap:10px;margin-bottom:18px;
+}
+.ring-wrap{position:relative;width:150px;height:150px;}
+.ring-svg{transform:rotate(-90deg);overflow:visible;}
+.ring-track{fill:none;stroke:var(--surface2);stroke-width:12;}
+.ring-prog{
+  fill:none;stroke-width:12;stroke-linecap:round;
+  transition:stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1),stroke 0.4s;
+}
+.ring-inner{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.ring-pct{
+  font-family:var(--mono);font-size:1.9rem;font-weight:600;
+  line-height:1;letter-spacing:-1px;
+}
+.ring-lbl{font-size:0.58rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;margin-top:2px;}
+
+/* ===========================
+   STATUS PILL
+=========================== */
+.s-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:30px;
+  font-size:0.72rem;font-weight:700;letter-spacing:0.04em;
+  border:1.5px solid transparent;transition:all 0.3s;
+}
+.s-pill .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.pill-safe  {background:var(--safe-bg);color:var(--safe);border-color:var(--safe-bd);}
+.pill-safe  .sdot{background:var(--safe);}
+.pill-risk  {background:var(--risk-bg);color:var(--risk);border-color:var(--risk-bd);}
+.pill-risk  .sdot{background:var(--risk);}
+.pill-danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bd);}
+.pill-danger .sdot{background:var(--danger);}
+
+/* ===========================
+   PROGRESS BAR
+=========================== */
+.prog-track{
+  height:8px;background:var(--surface2);
+  border-radius:10px;overflow:hidden;
+  border:1px solid var(--border);
+  margin:10px 0 5px;
+}
+.prog-fill{
+  height:100%;border-radius:10px;
+  transition:width 0.65s cubic-bezier(.4,0,.2,1),background 0.4s;
+}
+.prog-labels{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:0.58rem;color:var(--muted2);
+}
+.prog-labels .mark{position:relative;}
+
+/* ===========================
+   INPUTS
+=========================== */
+.inp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.inp-g label{
+  display:block;font-size:0.6rem;font-weight:700;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;
+}
+.inp-g input{
+  width:100%;padding:10px 11px;
+  background:var(--bg);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-family:var(--mono);font-size:0.95rem;font-weight:500;
+  outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+  -moz-appearance:textfield;
+}
+.inp-g input::-webkit-inner-spin-button,
+.inp-g input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.inp-g input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(192,80,0,0.12);
+}
+
+/* ===========================
+   STAT CHIPS
+=========================== */
+.stat-row{display:flex;gap:8px;margin-top:12px;}
+.stat-chip{
+  flex:1;background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 10px 8px;
+  text-align:center;
+}
+.stat-chip-lbl{font-size:0.55rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);}
+.stat-chip-val{font-family:var(--mono);font-size:1rem;font-weight:600;margin-top:3px;}
+
+/* ===========================
+   DAY CHIPS (legend)
+=========================== */
+.day-legend{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;
+}
+.day-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  font-family:var(--mono);font-size:0.65rem;font-weight:500;
+  border:1.5px solid;
+}
+.dc-full {background:var(--chip-full);border-color:var(--chip-full-b);color:var(--chip-full-b);}
+.dc-morn {background:var(--chip-morn);border-color:var(--chip-morn-b);color:var(--chip-morn-b);}
+.dc-eve  {background:var(--chip-eve); border-color:var(--chip-eve-b); color:var(--chip-eve-b);}
+
+/* ===========================
+   BUNK RESULT BOX
+=========================== */
+.bunk-box{
+  border-radius:var(--radius);padding:16px;
+  border:1.5px solid var(--border);margin-bottom:12px;
+  transition:all 0.3s;
+}
+.bunk-box.can   {background:var(--safe-bg);  border-color:var(--safe-bd);}
+.bunk-box.must  {background:var(--danger-bg);border-color:var(--danger-bd);}
+.bunk-box.empty {background:var(--surface2); border-color:var(--border);}
+.bunk-big{
+  font-family:var(--mono);font-size:2.4rem;font-weight:600;
+  line-height:1;letter-spacing:-1px;
+}
+.bunk-sub{font-size:0.72rem;color:var(--muted);margin-top:4px;}
+.bunk-breakdown{
+  margin-top:12px;display:flex;flex-direction:column;gap:6px;
+}
+.bb-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,0.6);border-radius:8px;
+  padding:8px 12px;border:1px solid rgba(0,0,0,0.06);
+}
+.bb-row-lbl{font-size:0.72rem;display:flex;align-items:center;gap:6px;}
+.bb-row-val{font-family:var(--mono);font-size:0.9rem;font-weight:600;}
+
+/* ===========================
+   FORMULA BOX
+=========================== */
+.formula-box{
+  background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:12px 14px;
+  font-family:var(--mono);font-size:0.68rem;color:var(--muted);
+  line-height:1.8;margin-bottom:12px;
+}
+.formula-box .f-accent{color:var(--accent);font-weight:600;}
+
+/* ===========================
+   BUTTONS
+=========================== */
+.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.btn{
+  flex:1;min-width:0;padding:12px 8px;
+  border:1.5px solid transparent;border-radius:var(--radius-sm);
+  font-family:var(--font);font-size:0.75rem;font-weight:700;
+  cursor:pointer;transition:all 0.18s;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  letter-spacing:0.02em;
+}
+.btn:active{transform:scale(0.96);}
+.btn-ghost{
+  background:var(--surface);color:var(--text);border-color:var(--border);
+  box-shadow:2px 2px 0 var(--border);
+}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-primary{
+  background:var(--text);color:var(--bg);border-color:var(--text);
+  box-shadow:3px 3px 0 var(--border2);
+}
+.btn-primary:hover{background:#2d2820;box-shadow:2px 2px 0 var(--border2);}
+.btn-safe{background:var(--safe-bg);color:var(--safe);border-color:var(--safe-bd);box-shadow:2px 2px 0 var(--safe-bd);}
+.btn-safe:hover{background:#c4e8d4;}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bd);box-shadow:2px 2px 0 var(--danger-bd);}
+.btn-danger:hover{background:#f8d0d0;}
+.btn-warn{background:var(--risk-bg);color:var(--risk);border-color:var(--risk-bd);box-shadow:2px 2px 0 var(--risk-bd);}
+.btn-warn:hover{background:#f8e8a0;}
+.btn-purple{background:var(--chip-eve);color:var(--chip-eve-b);border-color:var(--chip-eve-b);box-shadow:2px 2px 0 var(--chip-eve-b);}
+.btn-purple:hover{background:#e8d8f8;}
+
+/* ===========================
+   SIM PREVIEW
+=========================== */
+.sim-strip{
+  display:flex;align-items:center;
+  background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px;
+  margin-bottom:14px;gap:10px;
+}
+.sim-val{flex:1;text-align:center;}
+.sim-big{font-family:var(--mono);font-size:1.5rem;font-weight:600;}
+.sim-lbl{font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);margin-top:2px;}
+.sim-arrow{font-size:1.2rem;color:var(--muted2);flex-shrink:0;}
+.sim-result-box{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:13px;
+  font-size:0.78rem;line-height:1.6;margin-top:10px;
+  animation:fadeUp 0.3s ease;
+}
+
+/* ===========================
+   MULTI SIM
+=========================== */
+.multi-result{
+  background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px;
+}
+.multi-result-row{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:0.78rem;padding:4px 0;
+  border-bottom:1px dashed var(--border);
+}
+.multi-result-row:last-child{border-bottom:none;}
+
+/* ===========================
+   SUBJECTS
+=========================== */
+.subj-item{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:15px;
+  margin-bottom:10px;
+  box-shadow:2px 2px 0 var(--bg2);
+  animation:fadeUp 0.28s ease;
+}
+.subj-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.subj-name-inp{
+  background:none;border:none;outline:none;
+  font-family:var(--font);font-size:0.92rem;font-weight:700;
+  color:var(--text);width:60%;
+}
+.subj-pct-badge{
+  font-family:var(--mono);font-size:0.85rem;font-weight:600;
+}
+.subj-prog{height:5px;background:var(--bg2);border-radius:6px;overflow:hidden;margin-bottom:10px;border:1px solid var(--border);}
+.subj-prog-fill{height:100%;border-radius:6px;transition:width 0.5s,background 0.4s;}
+.subj-inp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.subj-inp-g label{font-size:0.55rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);display:block;margin-bottom:4px;}
+.subj-inp-g input{
+  width:100%;padding:7px 9px;
+  background:var(--bg);border:1.5px solid var(--border);
+  border-radius:7px;color:var(--text);
+  font-family:var(--mono);font-size:0.82rem;font-weight:500;
+  outline:none;-moz-appearance:textfield;
+}
+.subj-inp-g input::-webkit-inner-spin-button,
+.subj-inp-g input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.subj-inp-g input:focus{border-color:var(--accent);}
+.del-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--muted2);font-size:1rem;
+  padding:3px 5px;border-radius:5px;transition:color 0.2s;
+}
+.del-btn:hover{color:var(--danger);}
+.combined-strip{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:14px;margin-bottom:12px;
+  box-shadow:3px 3px 0 var(--bg2);text-align:center;
+}
+.combined-lbl{font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:4px;}
+.combined-val{font-family:var(--mono);font-size:1.9rem;font-weight:600;}
+
+/* ===========================
+   BREAKDOWN INFO
+=========================== */
+.info-row{
+  display:flex;justify-content:space-between;
+  align-items:center;font-size:0.75rem;padding:6px 0;
+  border-bottom:1px dashed var(--border);
+}
+.info-row:last-child{border-bottom:none;}
+.info-row span:first-child{color:var(--muted);}
+.info-row span:last-child{font-family:var(--mono);font-weight:600;}
+
+/* ===========================
+   WARNING
+=========================== */
+.warning{
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--risk-bg);border:1.5px solid var(--risk-bd);
+  border-radius:var(--radius-sm);padding:12px 14px;
+  margin-bottom:12px;
+}
+.warn-icon{font-size:0.9rem;flex-shrink:0;margin-top:1px;}
+.warn-text{font-size:0.7rem;color:var(--risk);line-height:1.55;}
+
+/* ===========================
+   EMPTY STATE
+=========================== */
+.empty-state{
+  text-align:center;padding:28px 0;
+  color:var(--muted);font-size:0.82rem;
+}
+.empty-state .ei{font-size:2.4rem;margin-bottom:8px;}
+
+/* ===========================
+   TAB SECTIONS
+=========================== */
+.tab-sec{display:none;}
+.tab-sec.active{display:block;}
+
+/* ===========================
+   TOAST
+=========================== */
+.toast{
+  position:fixed;bottom:20px;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--text);color:var(--bg);
+  padding:10px 20px;border-radius:30px;
+  font-size:0.78rem;font-weight:600;
+  box-shadow:0 6px 20px rgba(0,0,0,0.2);
+  transition:transform 0.3s cubic-bezier(.4,0,.2,1);
+  z-index:999;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ===========================
+   DIVIDER
+=========================== */
+.divider{
+  height:1px;background:var(--border);
+  margin:14px 0;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo-icon">📅</div>
+      <div class="logo-block">
+        <div class="logo-name">FXEC <span>Day Bunker</span></div>
+        <div class="logo-sub">1 DAY = 7 HRS · BIOMETRIC SYSTEM · DAY-BASED PLANNER</div>
+      </div>
+    </div>
+    <div class="version-tag">v1.0</div>
+  </div>
+
+  <!-- ===== NAV ===== -->
+  <div class="nav">
+    <button class="nav-btn active" id="tab-dash" onclick="switchTab('dash')">
+      <span class="ni">📊</span>Dashboard
+    </button>
+    <button class="nav-btn" id="tab-bunk" onclick="switchTab('bunk')">
+      <span class="ni">🏃</span>Bunk Calc
+    </button>
+    <button class="nav-btn" id="tab-sim" onclick="switchTab('sim')">
+      <span class="ni">🔮</span>Simulate
+    </button>
+    <button class="nav-btn" id="tab-subj" onclick="switchTab('subj')">
+      <span class="ni">📚</span>Subjects
+    </button>
+  </div>
+
+  <!-- ========================================
+       TAB: DASHBOARD
+  ======================================== -->
+  <div class="tab-sec active" id="sec-dash">
+
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Attendance Overview</div>
+
+      <!-- Ring -->
+      <div class="ring-area">
+        <div class="ring-wrap">
+          <svg class="ring-svg" width="150" height="150" viewBox="0 0 150 150">
+            <circle class="ring-track" cx="75" cy="75" r="60"/>
+            <circle class="ring-prog" id="ring-prog" cx="75" cy="75" r="60"
+              stroke-dasharray="376.99"
+              stroke-dashoffset="376.99"/>
+          </svg>
+          <div class="ring-inner">
+            <div class="ring-pct" id="ring-pct">—</div>
+            <div class="ring-lbl">ATTENDANCE</div>
+          </div>
+        </div>
+        <div class="s-pill pill-danger" id="status-pill">
+          <span class="sdot"></span>
+          <span id="status-txt">No Data</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="prog-track">
+        <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+      <div class="prog-labels">
+        <span class="mark">0%</span>
+        <span class="mark" style="color:var(--danger)">70%</span>
+        <span class="mark" style="color:var(--risk)">75%</span>
+        <span class="mark">100%</span>
+      </div>
+    </div>
+
+    <!-- Inputs -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Enter Hours</div>
+      <div class="inp-grid">
+        <div class="inp-g">
+          <label>Total Hrs</label>
+          <input type="number" id="d-total" min="0" placeholder="0" oninput="calc()"/>
+        </div>
+        <div class="inp-g">
+          <label>Present Hrs</label>
+          <input type="number" id="d-present" min="0" placeholder="0" oninput="calc()"/>
+        </div>
+        <div class="inp-g">
+          <label>OD Hrs</label>
+          <input type="number" id="d-od" min="0" placeholder="0" oninput="calc()"/>
+        </div>
+      </div>
+      <!-- Day legend -->
+      <div style="margin-top:12px;">
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);margin-bottom:7px;">Day Reference</div>
+        <div class="day-legend">
+          <div class="day-chip dc-full">🌕 Full Day = 7 hrs</div>
+          <div class="day-chip dc-morn">🌅 Morning Half = 4 hrs</div>
+          <div class="day-chip dc-eve">🌆 Evening Half = 3 hrs</div>
+        </div>
+      </div>
+      <!-- Stat chips -->
+      <div class="stat-row">
+        <div class="stat-chip">
+          <div class="stat-chip-lbl">Effective</div>
+          <div class="stat-chip-val" id="chip-eff">0</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-lbl">Absent Hrs</div>
+          <div class="stat-chip-val" id="chip-abs" style="color:var(--danger)">0</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-lbl">Bunk Days</div>
+          <div class="stat-chip-val" id="chip-bdays" style="color:var(--safe)">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning">
+      <span class="warn-icon">⚠️</span>
+      <div class="warn-text">This is an estimate. Always verify with your college biometric records.</div>
+    </div>
+
+  </div>
+
+  <!-- ========================================
+       TAB: BUNK CALC
+  ======================================== -->
+  <div class="tab-sec" id="sec-bunk">
+
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Day Bunk Intelligence</div>
+
+      <!-- Result box -->
+      <div class="bunk-box empty" id="bunk-box">
+        <div class="bunk-big" id="bunk-big" style="color:var(--muted2)">—</div>
+        <div class="bunk-sub" id="bunk-sub">Enter your hours in Dashboard first</div>
+
+        <!-- Breakdown (shown when data exists) -->
+        <div class="bunk-breakdown" id="bunk-breakdown" style="display:none;">
+          <div class="bb-row">
+            <div class="bb-row-lbl">🌕 Full Days</div>
+            <div class="bb-row-val" id="bk-full">—</div>
+          </div>
+          <div class="bb-row" id="bk-half-row">
+            <div class="bb-row-lbl" id="bk-half-lbl">🌅 Morning Half Days</div>
+            <div class="bb-row-val" id="bk-half">—</div>
+          </div>
+          <div class="bb-row">
+            <div class="bb-row-lbl">📊 Total Hours Margin</div>
+            <div class="bb-row-val" id="bk-hrs">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formula reference -->
+      <div class="formula-box">
+        <span class="f-accent">Bunk formula:</span> x ≤ (Present+OD) / 0.75 − Total<br/>
+        <span class="f-accent">Recovery formula:</span> x ≥ (0.75×Total − (P+OD)) / 0.25<br/>
+        <span class="f-accent">1 full day</span> = 7 hrs · <span class="f-accent">Morning</span> = 4 · <span class="f-accent">Evening</span> = 3
+      </div>
+
+      <!-- Breakdown table -->
+      <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
+        <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:10px;">Details</div>
+        <div class="info-row">
+          <span>Current attendance</span>
+          <span id="bk-cur-pct">—</span>
+        </div>
+        <div class="info-row">
+          <span>Target threshold</span>
+          <span style="color:var(--safe)">75.00%</span>
+        </div>
+        <div class="info-row">
+          <span>Gap from 75%</span>
+          <span id="bk-gap">—</span>
+        </div>
+        <div class="info-row">
+          <span>Hours of margin</span>
+          <span id="bk-margin">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning">
+      <span class="warn-icon">⚠️</span>
+      <div class="warn-text">This is an estimate. Always verify with your college biometric records.</div>
+    </div>
+
+  </div>
+
+  <!-- ========================================
+       TAB: SIMULATE
+  ======================================== -->
+  <div class="tab-sec" id="sec-sim">
+
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Day Simulator</div>
+
+      <!-- Live strip -->
+      <div class="sim-strip">
+        <div class="sim-val">
+          <div class="sim-big" id="sim-cur">—</div>
+          <div class="sim-lbl">Current</div>
+        </div>
+        <div class="sim-arrow">→</div>
+        <div class="sim-val">
+          <div class="sim-big" id="sim-after" style="color:var(--muted2)">—</div>
+          <div class="sim-lbl">After Action</div>
+        </div>
+      </div>
+
+      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:12px;text-align:center;line-height:1.5;">
+        Tap a button to simulate. <br/>Your saved data won't be changed.
+      </div>
+
+      <!-- Bunk buttons -->
+      <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:7px;">Bunk Options</div>
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="sim('bunk-full')">🌕 Bunk Full Day<br/><span style="font-size:0.6rem;opacity:0.7;">+7 total</span></button>
+        <button class="btn btn-warn"   onclick="sim('bunk-morn')">🌅 Bunk Morning<br/><span style="font-size:0.6rem;opacity:0.7;">+4 total</span></button>
+        <button class="btn btn-purple" onclick="sim('bunk-eve')">🌆 Bunk Evening<br/><span style="font-size:0.6rem;opacity:0.7;">+3 total</span></button>
+      </div>
+      <!-- Attend button -->
+      <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin:12px 0 7px;">Attend Options</div>
+      <div class="btn-row">
+        <button class="btn btn-safe"    onclick="sim('attend-full')">✅ Attend Full Day<br/><span style="font-size:0.6rem;opacity:0.7;">+7 present, +7 total</span></button>
+      </div>
+
+      <!-- Result -->
+      <div id="sim-result" style="display:none;" class="sim-result-box"></div>
+    </div>
+
+    <!-- Multi-day projection -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Multi-Day Projection</div>
+      <div style="display:flex;gap:10px;margin-bottom:12px;align-items:flex-end;">
+        <div class="inp-g" style="flex:1;">
+          <label>Bunk N Full Days</label>
+          <input type="number" id="multi-n" min="1" placeholder="e.g. 3" oninput="multiSim()"/>
+        </div>
+      </div>
+      <div class="multi-result" id="multi-res">
+        <div style="font-size:0.72rem;color:var(--muted2);">Enter a number above to project.</div>
+      </div>
+    </div>
+
+    <div class="warning">
+      <span class="warn-icon">⚠️</span>
+      <div class="warn-text">This is an estimate. Always verify with your college biometric records.</div>
+    </div>
+
+  </div>
+
+  <!-- ========================================
+       TAB: SUBJECTS
+  ======================================== -->
+  <div class="tab-sec" id="sec-subj">
+
+    <div class="combined-strip" id="combined-strip">
+      <div class="combined-lbl">Combined Attendance</div>
+      <div class="combined-val" id="combined-val">—</div>
+      <div class="prog-track" style="margin:10px 0 5px;">
+        <div class="prog-fill" id="combined-prog" style="width:0%"></div>
+      </div>
+      <div id="combined-status" style="margin-top:6px;"></div>
+    </div>
+
+    <div id="subj-list"></div>
+
+    <button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="addSubject()">
+      ＋ Add Subject
+    </button>
+
+    <div class="warning">
+      <span class="warn-icon">⚠️</span>
+      <div class="warn-text">This is an estimate. Always verify with your college biometric records.</div>
+    </div>
+
+  </div>
+
+</div><!-- end .app -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===========================================
+   CONSTANTS
+=========================================== */
+const FULL = 7;   // hours in a full day
+const MORN = 4;   // morning half
+const EVE  = 3;   // evening half
+const CIRC = 2 * Math.PI * 60; // ring circumference (r=60)
+
+/* ===========================================
+   STATE
+=========================================== */
+let S = {
+  total:0, present:0, od:0,
+  subjects:[]
+};
+
+/* ===========================================
+   STORAGE
+=========================================== */
+function loadState(){
+  try{
+    const raw = localStorage.getItem('fxec_state');
+    if(raw) S = JSON.parse(raw);
+  }catch(e){}
+  document.getElementById('d-total').value   = S.total   || '';
+  document.getElementById('d-present').value = S.present || '';
+  document.getElementById('d-od').value      = S.od      || '';
+  calc();
+  renderSubjects();
+}
+function saveState(){
+  localStorage.setItem('fxec_state', JSON.stringify(S));
+}
+
+/* ===========================================
+   CORE FORMULA
+=========================================== */
+function getAttPct(total, present, od){
+  if(!total || total <= 0) return null;
+  const eff = (present||0) + (od||0);
+  const pct = (eff / total) * 100;
+  return Math.min(100, Math.max(0, pct));
+}
+function getStatus(pct){
+  if(pct === null) return 'none';
+  if(pct >= 75) return 'safe';
+  if(pct >= 70) return 'risk';
+  return 'danger';
+}
+function r2(n){ return Math.round(n*100)/100; }
+
+/* Convert excess/deficit hours → days breakdown */
+function hrsToDays(hrs){
+  if(hrs <= 0) return {full:0, remaining:0};
+  const full = Math.floor(hrs / FULL);
+  const rem  = hrs % FULL;
+  return {full, remaining:rem};
+}
+
+/* Suggest half-day option from remaining hours */
+function suggestHalf(rem){
+  if(rem >= MORN) return {label:'Morning Half', hrs:MORN, icon:'🌅'};
+  if(rem >= EVE)  return {label:'Evening Half', hrs:EVE,  icon:'🌆'};
+  return null;
+}
+
+/* ===========================================
+   CALC (main)
+=========================================== */
+function calc(){
+  S.total   = parseInt(document.getElementById('d-total').value)   || 0;
+  S.present = parseInt(document.getElementById('d-present').value) || 0;
+  S.od      = parseInt(document.getElementById('d-od').value)      || 0;
+  saveState();
+
+  const {total, present, od} = S;
+  const eff = present + od;
+  const pct = getAttPct(total, present, od);
+  const status = getStatus(pct);
+
+  /* Color */
+  const color = status==='safe'  ? 'var(--safe)'
+              : status==='risk'  ? 'var(--risk)'
+              : status==='none'  ? 'var(--muted2)'
+              : 'var(--danger)';
+
+  /* Ring */
+  const ring = document.getElementById('ring-prog');
+  if(pct !== null){
+    const offset = CIRC - (CIRC * pct / 100);
+    ring.style.strokeDashoffset = offset;
+    ring.style.stroke = color;
+    document.getElementById('ring-pct').textContent = r2(pct)+'%';
+  } else {
+    ring.style.strokeDashoffset = CIRC;
+    ring.style.stroke = 'var(--border)';
+    document.getElementById('ring-pct').textContent = '—';
+  }
+
+  /* Progress bar */
+  const pf = document.getElementById('prog-fill');
+  pf.style.width     = (pct||0)+'%';
+  pf.style.background = color;
+
+  /* Status pill */
+  const pill = document.getElementById('status-pill');
+  pill.className = 's-pill '+(status==='safe'?'pill-safe':status==='risk'?'pill-risk':'pill-danger');
+  document.getElementById('status-txt').textContent =
+    status==='safe'  ? '✓ Safe'   :
+    status==='risk'  ? 'At Risk'  :
+    status==='none'  ? 'No Data'  : 'Danger';
+
+  /* Chips */
+  document.getElementById('chip-eff').textContent  = eff;
+  document.getElementById('chip-abs').textContent  = total ? Math.max(0,total-eff) : 0;
+
+  /* Bunk days chip (safe bunkable full days) */
+  if(pct !== null && pct >= 75){
+    const marginHrs = Math.floor(eff / 0.75 - total);
+    const fd = Math.floor(marginHrs / FULL);
+    document.getElementById('chip-bdays').textContent = fd >= 0 ? fd : 0;
+    document.getElementById('chip-bdays').style.color = 'var(--safe)';
+  } else {
+    document.getElementById('chip-bdays').textContent = '—';
+    document.getElementById('chip-bdays').style.color = 'var(--muted2)';
+  }
+
+  /* Sync other tabs */
+  updateBunkTab(total, present, od, pct, eff);
+  updateSimCur(pct);
+}
+
+/* ===========================================
+   BUNK TAB
+=========================================== */
+function updateBunkTab(total, present, od, pct, eff){
+  const box  = document.getElementById('bunk-box');
+  const big  = document.getElementById('bunk-big');
+  const sub  = document.getElementById('bunk-sub');
+  const brkd = document.getElementById('bunk-breakdown');
+
+  /* Detail rows */
+  document.getElementById('bk-cur-pct').textContent = pct!==null ? r2(pct)+'%' : '—';
+  const gap = pct!==null ? r2(pct-75) : null;
+  const gapEl = document.getElementById('bk-gap');
+  if(gap!==null){
+    gapEl.textContent = (gap>=0?'+':'')+gap+'%';
+    gapEl.style.color  = gap>=0 ? 'var(--safe)' : 'var(--danger)';
+  } else { gapEl.textContent='—'; gapEl.style.color='var(--muted2)'; }
+
+  if(!total || total<=0){
+    box.className='bunk-box empty';
+    big.textContent='—'; big.style.color='var(--muted2)';
+    sub.textContent='Enter your hours in Dashboard first';
+    brkd.style.display='none';
+    document.getElementById('bk-margin').textContent='—';
+    return;
+  }
+
+  /* Bunkable hours margin */
+  const marginHrs = r2(eff / 0.75 - total);
+  document.getElementById('bk-margin').textContent = marginHrs >= 0 ? '+'+marginHrs+' hrs' : marginHrs+' hrs';
+
+  if(pct >= 75){
+    /* CAN BUNK */
+    const floorHrs = Math.floor(eff / 0.75 - total);
+    if(floorHrs <= 0){
+      box.className='bunk-box empty';
+      big.textContent='0'; big.style.color='var(--risk)';
+      sub.textContent="You're right at the edge — can't risk any bunk!";
+      brkd.style.display='none';
+      return;
+    }
+    const {full, remaining} = hrsToDays(floorHrs);
+    const half = suggestHalf(remaining);
+
+    box.className='bunk-box can';
+    big.style.color='var(--safe)';
+
+    if(full === 0 && half){
+      big.textContent = '½';
+      sub.textContent = `Only a ${half.label} (${half.hrs} hrs) available to bunk safely`;
+    } else {
+      big.textContent = full;
+      sub.textContent = `full day${full!==1?'s':''} you can safely bunk (stay ≥ 75%)`;
+    }
+
+    brkd.style.display='flex';
+    document.getElementById('bk-full').textContent = full;
+    if(half){
+      document.getElementById('bk-half-row').style.display='flex';
+      document.getElementById('bk-half-lbl').textContent = half.icon+' '+half.label+' ('+half.hrs+' hrs)';
+      document.getElementById('bk-half').textContent = 'also possible';
+    } else {
+      document.getElementById('bk-half-row').style.display='none';
+    }
+    document.getElementById('bk-hrs').textContent = floorHrs+' hrs total';
+
+  } else {
+    /* RECOVERY */
+    const deficitHrs = Math.ceil((0.75 * total - eff) / 0.25);
+    const {full, remaining} = hrsToDays(deficitHrs);
+    const extraDays = remaining > 0 ? full + 1 : full;
+
+    box.className='bunk-box must';
+    big.style.color='var(--danger)';
+    big.textContent = extraDays;
+    sub.textContent = `full day${extraDays!==1?'s':''} of consecutive attendance needed to recover to 75%`;
+    brkd.style.display='flex';
+
+    document.getElementById('bk-full').textContent = full + (remaining>0 ? ' + partial' : '');
+    const half = suggestHalf(remaining);
+    if(remaining > 0 && half){
+      document.getElementById('bk-half-row').style.display='flex';
+      document.getElementById('bk-half-lbl').textContent = half.icon+' Partial ('+remaining+' hrs)';
+      document.getElementById('bk-half').textContent = 'also counts';
+    } else {
+      document.getElementById('bk-half-row').style.display='none';
+    }
+    document.getElementById('bk-hrs').textContent = deficitHrs+' hrs deficit';
+  }
+}
+
+/* ===========================================
+   SIMULATE TAB
+=========================================== */
+function updateSimCur(pct){
+  const el = document.getElementById('sim-cur');
+  el.textContent = pct!==null ? r2(pct)+'%' : '—';
+  el.style.color = pct!==null
+    ? (pct>=75 ? 'var(--safe)' : pct>=70 ? 'var(--risk)' : 'var(--danger)')
+    : 'var(--muted2)';
+  document.getElementById('sim-after').textContent = '—';
+  document.getElementById('sim-after').style.color = 'var(--muted2)';
+  document.getElementById('sim-result').style.display = 'none';
+}
+
+function sim(action){
+  const {total, present, od} = S;
+  if(!total){ toast('⚠️ Enter hours in Dashboard first!'); return; }
+
+  let nTotal=total, nPresent=present;
+  let actionLabel='', hoursNote='';
+
+  if(action==='bunk-full') { nTotal+=FULL;  actionLabel='Bunking a full day';   hoursNote='(+7 total hrs)'; }
+  if(action==='bunk-morn') { nTotal+=MORN;  actionLabel='Bunking morning half'; hoursNote='(+4 total hrs)'; }
+  if(action==='bunk-eve')  { nTotal+=EVE;   actionLabel='Bunking evening half'; hoursNote='(+3 total hrs)'; }
+  if(action==='attend-full'){ nTotal+=FULL; nPresent+=FULL; actionLabel='Attending full day'; hoursNote='(+7 present, +7 total)'; }
+
+  const curPct  = getAttPct(total, present, od);
+  const newPct  = getAttPct(nTotal, nPresent, od);
+  const diff    = r2(newPct - curPct);
+  const newSt   = getStatus(newPct);
+  const color   = newSt==='safe'?'var(--safe)':newSt==='risk'?'var(--risk)':'var(--danger)';
+  const stWord  = newSt==='safe'?'✅ Safe':newSt==='risk'?'⚠️ At Risk':'🚨 Danger';
+
+  const afterEl = document.getElementById('sim-after');
+  afterEl.textContent = r2(newPct)+'%';
+  afterEl.style.color = color;
+
+  const resDiv = document.getElementById('sim-result');
+  resDiv.style.display = 'block';
+  resDiv.innerHTML = `
+    <strong>${actionLabel}</strong> ${hoursNote}<br/>
+    Attendance: <strong>${r2(curPct)}%</strong> → <strong style="color:${color}">${r2(newPct)}%</strong>
+    (${diff>0?'+':''}${diff}%)<br/>
+    Status after: <strong style="color:${color}">${stWord}</strong>
+  `;
+  toast(action.startsWith('bunk') ? '🏃 Simulated bunking!' : '✅ Simulated attending!');
+}
+
+function multiSim(){
+  const {total, present, od} = S;
+  const n = parseInt(document.getElementById('multi-n').value) || 0;
+  const res = document.getElementById('multi-res');
+  if(!total || n<=0){
+    res.innerHTML='<div style="font-size:0.72rem;color:var(--muted2);">Enter a number above to project.</div>';
+    return;
+  }
+  const curPct = getAttPct(total, present, od);
+  const rows = [];
+  for(let i=1;i<=Math.min(n,10);i++){
+    const nT = total + i*FULL;
+    const p = getAttPct(nT, present, od);
+    const st = getStatus(p);
+    const c = st==='safe'?'var(--safe)':st==='risk'?'var(--risk)':'var(--danger)';
+    const icon = st==='safe'?'✅':st==='risk'?'⚠️':'🚨';
+    rows.push(`<div class="multi-result-row">
+      <span>After bunking <strong>day ${i}</strong></span>
+      <span style="font-family:var(--mono);font-weight:600;color:${c};">${icon} ${r2(p)}%</span>
+    </div>`);
+  }
+  const finalPct = getAttPct(total + n*FULL, present, od);
+  const fSt = getStatus(finalPct);
+  const fC = fSt==='safe'?'var(--safe)':fSt==='risk'?'var(--risk)':'var(--danger)';
+  res.innerHTML = rows.join('')
+    + `<div style="margin-top:10px;padding:10px;background:rgba(0,0,0,0.04);border-radius:8px;text-align:center;">
+        <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:4px;">Final after ${n} full day${n>1?'s':''} bunked</div>
+        <div style="font-family:var(--mono);font-size:1.4rem;font-weight:600;color:${fC};">${r2(finalPct)}%</div>
+      </div>`;
+}
+
+/* ===========================================
+   SUBJECTS TAB
+=========================================== */
+function addSubject(){
+  S.subjects.push({name:'New Subject', total:0, present:0, od:0});
+  saveState();
+  renderSubjects();
+  toast('📚 Subject added!');
+}
+function deleteSubject(i){
+  S.subjects.splice(i,1);
+  saveState();
+  renderSubjects();
+  toast('🗑️ Subject removed');
+}
+function updateSubject(i, field, val){
+  S.subjects[i][field] = field==='name' ? val : (parseInt(val)||0);
+  saveState();
+  renderSubjectRow(i);
+  updateCombined();
+}
+
+function renderSubjectRow(i){
+  /* Re-render just the pct badge and prog bar for speed */
+  const s = S.subjects[i];
+  const pct = getAttPct(s.total, s.present, s.od);
+  const st  = getStatus(pct);
+  const color = st==='safe'?'var(--safe)':st==='risk'?'var(--risk)':st==='danger'?'var(--danger)':'var(--muted2)';
+  const el = document.getElementById('subj-pct-'+i);
+  if(el){ el.textContent = pct!==null ? r2(pct)+'%' : '—'; el.style.color=color; }
+  const pf = document.getElementById('subj-pf-'+i);
+  if(pf){ pf.style.width=(pct||0)+'%'; pf.style.background=color; }
+}
+
+function escH(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderSubjects(){
+  const list = document.getElementById('subj-list');
+  if(!S.subjects.length){
+    list.innerHTML='<div class="empty-state"><div class="ei">📚</div><div>No subjects yet.<br/>Add one to start tracking!</div></div>';
+    document.getElementById('combined-val').textContent='—';
+    document.getElementById('combined-prog').style.width='0%';
+    document.getElementById('combined-status').innerHTML='';
+    return;
+  }
+  list.innerHTML = S.subjects.map((s,i)=>{
+    const pct  = getAttPct(s.total, s.present, s.od);
+    const st   = getStatus(pct);
+    const color= st==='safe'?'var(--safe)':st==='risk'?'var(--risk)':st==='danger'?'var(--danger)':'var(--muted2)';
+    return `<div class="subj-item">
+      <div class="subj-head">
+        <input class="subj-name-inp" value="${escH(s.name)}"
+          onchange="updateSubject(${i},'name',this.value)"
+          placeholder="Subject Name"/>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="subj-pct-badge" id="subj-pct-${i}" style="color:${color};">${pct!==null?r2(pct)+'%':'—'}</div>
+          <button class="del-btn" onclick="deleteSubject(${i})">✕</button>
+        </div>
+      </div>
+      <div class="subj-prog">
+        <div class="subj-prog-fill" id="subj-pf-${i}" style="width:${pct||0}%;background:${color};"></div>
+      </div>
+      <div class="subj-inp-grid">
+        <div class="subj-inp-g">
+          <label>Total Hrs</label>
+          <input type="number" min="0" value="${s.total||''}" placeholder="0"
+            oninput="updateSubject(${i},'total',this.value)"/>
+        </div>
+        <div class="subj-inp-g">
+          <label>Present Hrs</label>
+          <input type="number" min="0" value="${s.present||''}" placeholder="0"
+            oninput="updateSubject(${i},'present',this.value)"/>
+        </div>
+        <div class="subj-inp-g">
+          <label>OD Hrs</label>
+          <input type="number" min="0" value="${s.od||''}" placeholder="0"
+            oninput="updateSubject(${i},'od',this.value)"/>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateCombined();
+}
+
+function updateCombined(){
+  let tH=0, tEff=0;
+  S.subjects.forEach(s=>{ tH+=(s.total||0); tEff+=((s.present||0)+(s.od||0)); });
+  const pct  = getAttPct(tH, tEff, 0);
+  const st   = getStatus(pct);
+  const color= st==='safe'?'var(--safe)':st==='risk'?'var(--risk)':st==='danger'?'var(--danger)':'var(--muted2)';
+  document.getElementById('combined-val').textContent = pct!==null ? r2(pct)+'%' : '—';
+  document.getElementById('combined-val').style.color = color;
+  const cp = document.getElementById('combined-prog');
+  cp.style.width=(pct||0)+'%'; cp.style.background=color;
+  const cst = document.getElementById('combined-status');
+  cst.innerHTML = pct!==null
+    ? `<div class="s-pill ${st==='safe'?'pill-safe':st==='risk'?'pill-risk':'pill-danger'}" style="display:inline-flex;">
+        <span class="sdot" style="background:${color};width:7px;height:7px;border-radius:50%;"></span>
+        <span>${st==='safe'?'Safe':st==='risk'?'At Risk':'Danger'}</span>
+       </div>` : '';
+}
+
+/* ===========================================
+   TAB SWITCH
+=========================================== */
+function switchTab(tab){
+  document.querySelectorAll('.tab-sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+/* ===========================================
+   TOAST
+=========================================== */
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+/* ===========================================
+   INIT
+=========================================== */
+loadState();
+</script>
+</body>
+</html>
